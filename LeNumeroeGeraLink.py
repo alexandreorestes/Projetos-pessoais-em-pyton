@@ -1,5 +1,3 @@
-import webbrowser
-
 arquivo = open('Lista2.txt', 'r')
 for numero in range(350):
     numero = arquivo.readline()
