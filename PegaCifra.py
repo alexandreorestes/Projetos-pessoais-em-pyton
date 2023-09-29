@@ -30,9 +30,9 @@ while continuar:
     with open('copia_de-cifra.txt', 'r') as arquivo:
         conteudo = arquivo.read()
 
-    url_wp = 'https://worldmusic.mus.br/xmlrpc.php'
-    username = 'World Music'
-    password = 'LB75S87xuNDVDdf'
+    url_wp = 'https://SEUSITE/xmlrpc.php'
+    username = 'SEU NOME DE USUARIO'
+    password = 'SUA SENHA'
 
     wp = Client(url_wp, username, password)
 
