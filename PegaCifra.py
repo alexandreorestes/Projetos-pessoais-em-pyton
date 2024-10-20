@@ -1,48 +1,81 @@
+import requests
 from bs4 import BeautifulSoup
-from urllib.request import urlopen
 from wordpress_xmlrpc import Client, WordPressPost
 from wordpress_xmlrpc.methods.posts import NewPost
+from wordpress_xmlrpc.exceptions import InvalidCredentialsError
 
-continuar = True
+def extract_cifra_info(url):
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        cifra = soup.find('pre')
+        titulo = soup.find('title')
+        
+        if not cifra or not titulo:
+            return None, None
+        
+        titulo_novo = titulo.text.replace(" - Cifra Club", "") + " - Cifra Simplificada"
+        return titulo_novo, str(cifra)
+    except requests.RequestException as e:
+        print(f"Erro ao acessar a URL: {e}")
+        return None, None
 
-while continuar:
-    url = input('Digite a URL de um espaço e aperte enter (ou digite "q" para sair): ')
+def post_to_wordpress(url_wp, username, password, title, content):
+    try:
+        wp = Client(url_wp, username, password)
+        
+        post = WordPressPost()
+        post.title = title
+        post.content = content
+        post.post_status = 'publish'
+        post.terms_names = {
+            'category': ['Cifra', 'World Music']
+        }
+        
+        post_id = wp.call(NewPost(post))
+        return f"Post publicado com sucesso! ID: {post_id}"
+    except InvalidCredentialsError:
+        return "Erro: Credenciais inválidas para o WordPress."
+    except Exception as e:
+        return f"Erro ao publicar no WordPress: {e}"
+
+def process_url(url, url_wp, username, password):
+    titulo, cifra = extract_cifra_info(url)
     
-    if url == 'q':
-        continuar = False
-        break
+    if not titulo or not cifra:
+        print(f"Não foi possível extrair as informações da cifra para a URL: {url}")
+        return
     
-    html = urlopen(url)
-    bs = BeautifulSoup(html)
-
-    cifra = bs.find_all('pre')
-    titulo = bs.find('title')
-    titulo_novo = titulo.text[:-12] + "- Cifra Simplificada"
-
-    covert_cifra = str(cifra[0]) 
-
-    with open('copia_de-cifra.txt', 'w' ) as arquivo:
-        arquivo.write('<div class="col-sm-4"><div class="btn-group" role="group"><button type="button" style="border-radius:10%; background-color:blue; color:white; border:none;" onclick="baixar()">-</button><button style="border-radius:10%; background-color:blue; color:white; border:none;" onclick="location.reload()">½</button><button type="button" style="border-radius:10%; background-color:blue; color:white; border:none;" onclick="subir()">+</button></div></div><br>')
-        for linhas in covert_cifra:
-            arquivo.write(linhas)
-        arquivo.write('\n\n<script src="/wp-admin/js/transpor.js"></script>')
-
-    with open('copia_de-cifra.txt', 'r') as arquivo:
-        conteudo = arquivo.read()
-
-    url_wp = 'https://SEUSITE/xmlrpc.php'
-    username = 'SEU NOME DE USUARIO'
-    password = 'SUA SENHA'
-
-    wp = Client(url_wp, username, password)
-
-    post = WordPressPost()
-    post.title = titulo_novo
-    post.content = conteudo
-    post.post_type = 'post'
-    post.post_status = 'publish'
-    post.categories = ['Cifra', 'World Music']
+    print(f"\nExtraindo e publicando: {titulo}")
     
-    response = wp.call(NewPost(post))
+    result = post_to_wordpress(url_wp, username, password, titulo, cifra)
+    print(result)
 
-    print("Post publicado com sucesso!")
+def main():
+    url_wp = 'https://worldmusic.mus.br/cifra/xmlrpc.php'
+    username = 'USUARIO'
+    password = 'SENHA'
+
+    choice = input("Digite '1' para fornecer um arquivo com URLs ou '2' para fornecer uma única URL: ")
+
+    if choice == '1':
+        file_path = input("Digite o caminho do arquivo contendo as URLs: ")
+        try:
+            with open(file_path, 'r') as file:
+                urls = file.read().splitlines()
+            for url in urls:
+                process_url(url.strip(), url_wp, username, password)
+        except FileNotFoundError:
+            print(f"Arquivo não encontrado: {file_path}")
+        except Exception as e:
+            print(f"Erro ao ler o arquivo: {e}")
+    elif choice == '2':
+        url = input('Digite a URL da cifra: ')
+        process_url(url, url_wp, username, password)
+    else:
+        print("Opção inválida. Por favor, escolha '1' ou '2'.")
+
+if __name__ == "__main__":
+    main()
