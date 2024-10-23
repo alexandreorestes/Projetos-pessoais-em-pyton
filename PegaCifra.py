@@ -55,27 +55,36 @@ def process_url(url, url_wp, username, password):
 
 def main():
     url_wp = 'https://worldmusic.mus.br/cifra/xmlrpc.php'
-    username = 'USUARIO'
-    password = 'SENHA'
+    username = 'xandre2007'
+    password = 'Salmos372('
 
-    choice = input("Digite '1' para fornecer um arquivo com URLs ou '2' para fornecer uma única URL: ")
+    while True:
+        print("\nMenu:")
+        print("1. Fornecer um arquivo com URLs")
+        print("2. Fornecer uma única URL")
+        print("3. Sair")
 
-    if choice == '1':
-        file_path = input("Digite o caminho do arquivo contendo as URLs: ")
-        try:
-            with open(file_path, 'r') as file:
-                urls = file.read().splitlines()
-            for url in urls:
-                process_url(url.strip(), url_wp, username, password)
-        except FileNotFoundError:
-            print(f"Arquivo não encontrado: {file_path}")
-        except Exception as e:
-            print(f"Erro ao ler o arquivo: {e}")
-    elif choice == '2':
-        url = input('Digite a URL da cifra: ')
-        process_url(url, url_wp, username, password)
-    else:
-        print("Opção inválida. Por favor, escolha '1' ou '2'.")
+        choice = input("\nDigite a sua escolha: ")
+
+        if choice == '1':
+            file_path = input("Digite o caminho do arquivo contendo as URLs: ")
+            try:
+                with open(file_path, 'r') as file:
+                    urls = file.read().splitlines()
+                for url in urls:
+                    process_url(url.strip(), url_wp, username, password)
+            except FileNotFoundError:
+                print(f"Arquivo não encontrado: {file_path}")
+            except Exception as e:
+                print(f"Erro ao ler o arquivo: {e}")
+        elif choice == '2':
+            url = input('Digite a URL da cifra: ')
+            process_url(url, url_wp, username, password)
+        elif choice == '3':
+            print("Saindo do programa.")
+            break
+        else:
+            print("Opção inválida. Por favor, escolha '1', '2' ou '3'.")
 
 if __name__ == "__main__":
     main()
